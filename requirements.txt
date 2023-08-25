@@ -1,0 +1,6 @@
+flask
+flask_sqlalchemy
+python-decouple
+tenacity
+cryptography
+Flask-Mail

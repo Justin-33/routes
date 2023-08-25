@@ -1,0 +1,273 @@
+swagger: '2.0'
+
+info:
+  version: 1.0.0
+  title: Wonderland Blog - User
+  description: |
+    **Errors**
+
+    Uses conventional HTTP response codes to indicate success or failure. In general, codes in the `2xx` range indicate success. Codes in the `4xx` range indicate an error (e.g. required parameters, failed request etc.). Codes int he `5xx` range indicate a server error occurred.
+  
+  contact:
+    name: Nimota Inc.
+    email: developers@nimota.io
+  
+  license:
+    name: Proprietary
+
+host: nimota.io
+basePath: /users
+schemes:
+  - http
+  - https
+
+securityDefinitions:
+  authToken:
+    type: apiKey
+    name: x-auth-token
+    in: header
+
+tags:
+  - name: user
+    description: User related endpoints
+  - name: public
+    description: Publicly available endpoints
+
+paths:
+  /auth/signup:
+    post:
+      tags:
+        - user
+      security:
+        - authToken: []
+      summary: Register new user
+      operationId: authSignup
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: Signup credentials
+          schema:
+            $ref: '#/definitions/SignupRequestDto'
+      responses:
+        200:
+          description: Signup success
+          schema:
+            $ref: '_common.yaml#/definitions/StatusDto'
+
+  /auth/signin:
+    post:
+      tags:
+        - user
+      security:
+        - authToken: []
+      summary: Authenticate user
+      operationId: authSignin
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: Signin credentials
+          schema:
+            $ref: '#/definitions/SigninRequestDto'
+      responses:
+        200:
+          description: Signin successful
+          schema:
+            $ref: '#/definitions/TokenDto'
+
+  /auth/password/reset:
+    post:
+      tags:
+        - user
+      security: []
+      summary: Reset user password
+      operationId: authResetPassword
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: Login credentials
+          schema:
+            $ref: '#/definitions/PasswordResetDto'
+      responses:
+        200:
+          description: Operation successful
+          schema:
+            $ref: '_common.yaml#/definitions/StatusDto'
+
+  /auth/password/change:
+    post:
+      tags:
+        - user
+      security:
+        - authToken: []
+      summary: Change user password
+      description: |
+        Auth token to be gotten from email sent to the user via the /reset endpoint
+      operationId: authChangePassword
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: Login credentials
+          schema:
+            $ref: '#/definitions/PasswordChangeDto'
+      responses:
+        200:
+          description: Operation successful
+          schema:
+            $ref: '_common.yaml#/definitions/StatusDto'
+
+  /me:
+    get:
+      tags:
+        - user
+      security:
+        - authToken: []
+      summary: Get authenticated user
+      operationId: getActiveUser
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Request successful
+          schema:
+            $ref: '#/definitions/UserDto'
+
+    patch:
+      tags:
+        - user
+      security:
+        - authToken: []
+      summary: Update user info
+      operationId: updateUserInfo
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserDto'
+      responses:
+        200:
+          description: Request successful
+          schema:
+            $ref: '#/definitions/UserDto'
+
+definitions:
+  TokenDto:
+    type: object
+    required:
+      - token
+      - expiresIn
+    properties:
+      token:
+        type: string
+        example: JWT_TOKEN
+      expiresIn:
+        type: number
+        example: 3600
+
+  SignupRequestDto:
+    type: object
+    required:
+      - type
+      - firstName
+      - lastName
+      - email
+      - password
+    properties:
+      firstName:
+        type: string
+      lastName:
+        type: string
+      email:
+        type: string
+      phoneNumber:
+        type: string
+      password:
+        type: string
+    
+  SigninRequestDto:
+    type: object
+    required:
+      - type
+      - email
+      - password
+    properties: 
+      email:
+        type: string
+      password:
+        type: string
+
+  UserDto:
+    type: object
+    required:
+      - firstName
+      - lastName
+      - middleName
+    properties:
+      id:
+        type: string
+        format: uuid
+        readOnly: true
+      firstName:
+        type: string
+      middleName:
+        type: string
+      lastName:
+        type: string
+      email:
+        type: string
+        example: test@example.com
+        readOnly: true
+      phoneNumber:
+        type: string
+      photo:
+        type: string
+      createdAt:
+        $ref: '_common.yaml#/definitions/Timestamp'
+      updatedAt:
+        $ref: '_common.yaml#/definitions/Timestamp'
+
+  PasswordResetDto:
+    type: object
+    properties: 
+      email:
+        type: string
+        format: email
+
+  PasswordChangeDto:
+    type: object
+    properties:
+      password:
+        type: string
+
+  UserPasswordChangeDto:
+    type: object
+    required:
+      - currentPassword
+      - newPassword
+    properties:
+      currentPassword:
+        type: string
+        description: Current user password
+      newPassword:
+        type: string
+        description: New password to replace current
