@@ -18,7 +18,7 @@ from controllers import (
     pasword_change,
     update_user,
     login_manager,
-    token
+    user_infor
 )
 
 
@@ -108,6 +108,7 @@ app.add_url_rule("/auth/password/change", "password_change", pasword_change, met
 app.add_url_rule("/auth/password/reset", "password_reset", password_reset, methods=["POST"])
 app.add_url_rule(f"/auth/update_password/<token>", "update_password", update_password, methods=["POST"])
 app.add_url_rule("/me/<token>", "updated_user", update_user, methods=["POST"])
+app.add_url_rule("/me/<token>", "user_info", user_infor, methods=["GET"])
 
 
 if __name__ == '__main__':

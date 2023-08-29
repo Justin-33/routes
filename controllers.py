@@ -26,9 +26,14 @@ def signup():
     data = request.get_json()
     user_email = db.session.query(User).filter_by(email=data["email"] ).first()
     if user_email:
-        message =jsonify({"message":"You already signed up with that email, log in instead!"})
-        message.status_code = 401
-        return message
+        response = jsonify({
+        'success': False,
+        "message":"You already signed up with that email, log in instead!",
+        "token": None,
+        "status_code" : 401,
+        "user":[]
+        })
+        return response
     user_input = User(
         firstName = data["firstName"],
         lastName = data["lastName"],
@@ -45,12 +50,12 @@ def signup():
     confirm = confirm_token(token)
     print(confirm)
     response = jsonify({
-        'success': True,
-        "successful":"signup successful",
-        "token": token,
-        "confirm": confirm, 
-        })
-    response.status_code = 200
+    'success': True,
+    "message":"sign up successful!",
+    "token": None,
+    "status_code" : 401,
+    "user":[]
+    })
     return response
 
 
@@ -60,17 +65,24 @@ def signin():
     password = data["password"]
     users =  db.session.query(User).filter_by(email=data["email"] ).first()
     if not users and check_password_hash(users.password, password):
-        message =  jsonify({"message":"email or password is incorrect try again!"})
-        message.status_code=401
-        return message
-    else:
-        login_user(users) 
+        response = jsonify({
+            'success': True,
+            "message":"Email doesnt exist or pasword is incorrect, Try again!",
+            "token": None,
+            "status_code" : 401,
+            "user":[]
+            })
+        return response
+    login_user(users)
     response = jsonify({
-        'success': True,
-        "successful":"signin is successful" 
-        })
-    response.status_code = 200
+    'success': True,
+    "message":"You are successfully logged in!",
+    "token": None,
+    "status_code" : 200,
+    "user":[]
+    })
     return response
+
 
 
 @login_required
@@ -79,18 +91,26 @@ def password_reset():
     email = data["email"]
     user_email =  db.session.query(User).filter_by(email=email ).first()
     if not user_email:
-        response = jsonify({"message":"email doesn't exist"}),401
+        response = jsonify({
+        'success': False,
+        "message":"Email doesn't doesn't exist!",
+        "token": None,
+        "status_code" : 401,
+        "user":[]
+        })
+        return response
     token = generate_confirmation_token(user_email.id)
     #the send_reset_email function will send a token to the provided email
     send_reset_email(email, token, user_email.firstName)
     
     response = jsonify({
-        'success': True,
-        "successful":"reset password is successful" 
-        })
-    response.status_code = 200
+    'success': True,
+    "message":"You!",
+    "token": None,
+    "status_code" : 401,
+    "user":[]
+    })
     return response
-
 
 @login_required
 def update_password(token):
@@ -102,20 +122,33 @@ def update_password(token):
         user = db.session.query(User).filter_by(id=user_id).first()
         check_user = check_password_hash(user.password, existing_password)
         if not check_user:
-            return jsonify({"message":"password doesn't exist"}),401
+            response = jsonify({
+            'success': True,
+            "message":"existing password doesn't exist!",
+            "token": None,
+            "status_code" : 401,
+            "user":[]
+            })
+            return response
         user.password = generate_password_hash(new_password, method="pbkdf2:sha256", salt_length=8)
         db.session.commit()
         response = jsonify({
-            'success': True,
-            "successful":"reset password is successful" 
-            })
-        response.status_code = 200
+        'success': True,
+        "message":"password is successfully updated!",
+        "token": None,
+        "status_code" : 401,
+        "user":[]
+        })
         return response
     except Exception:
-        response = jsonify({"message":"sorry! Unexpected error trying to update password. try again!"})
-        response.status_code = 401
-        return response
-
+        response = jsonify({
+    'success': False,
+    "message":"Sorry unexpected error trying to update password, Try again!",
+    "token": None,
+    "status_code" : 401,
+    "user":[]
+    })
+    return response
 
 @login_required
 def pasword_change():
@@ -128,9 +161,11 @@ def pasword_change():
     db.session.commit()
     response = jsonify({
         'success': True,
-        "successful":"change password successful" 
+        "message":"password successfully changed!",
+        "token": None,
+        "status_code" : 401,
+        "user":[]
         })
-    response.status_code = 200
     return response
 
 @validate_update_middleware
@@ -139,7 +174,14 @@ def update_user(token):
     user = db.session.query(User).filter_by(id=user_id).first()
     
     if not user:
-        return jsonify({'message': 'User not found'}), 404
+        response = jsonify({
+        'success': True,
+        "message":"User not found!",
+        "token": None,
+        "status_code" : 401,
+        "user":[]
+    })
+        return response
     
     data = request.get_json()
     
@@ -151,14 +193,45 @@ def update_user(token):
         user.email = data['email']
     if 'phoneNumber' in data:
         user.phoneNumber = data['phoneNumber']
-    if 'password' in data:
-        user.password = data['password']
+
     
     db.session.commit()
 
     response = jsonify({
         'success': True,
-        "successful":"update successful" 
+        "message":f"{data}update is successful!",
+        "token": None,
+        "status_code" : 200,
+        "user":[]
         })
-    response.status_code = 200
+    return response
+
+
+def user_infor(token):
+    user_id = confirm_token(token)
+    user = db.session.query(User).filter_by(id=user_id).first()
+    if not user:
+        response = jsonify({
+        'success': True,
+        "message":"User not found!",
+        "token": None,
+        "status_code" : 401,
+        "user":[]
+        })
+        return response
+    response = jsonify({
+    'success': True,
+    "message":"Here is your information!",
+    "token": None,
+    "status_code" : 200,
+    "user":[
+        {
+            "firstname":user.firstName,
+            "lastname":user.lastName,
+            "email":user.email,
+            "phonenumber":user.phoneNumber,
+            "createdAt":user.event_time
+        }
+    ]
+    })
     return response
